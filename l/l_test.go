@@ -1,18 +1,17 @@
 package l
 
 import (
+	"context"
 	"testing"
-
-	"github.com/thnthien/great-deku/l/sentry"
 )
 
 func TestNew(t *testing.T) {
 
-	//ll = New()
-	ll = NewWithSentry(&sentry.Configuration{
-		DSN:   "https://6c823523782944c597fcc102c8b6ae4e@o390151.ingest.sentry.io/5231166",
-		Trace: struct{ Disabled bool }{Disabled: false},
-	})
+	ll = New()
+	//ll = NewWithSentry(&sentry.Configuration{
+	//	DSN:   "https://6c823523782944c597fcc102c8b6ae4e@o390151.ingest.sentry.io/5231166",
+	//	Trace: struct{ Disabled bool }{Disabled: false},
+	//})
 	defer ll.Sync()
 	a := map[string]interface{}{
 		"testdebug": 1,
@@ -23,4 +22,9 @@ func TestNew(t *testing.T) {
 	//ll.Panic("fatal")
 	ll.Error("test err")
 
+	ctx := context.WithValue(context.Background(), RequestIDCtxKey, "test_id")
+	ll.DebugCtx(ctx, "test request_id", String("message", "test"))
+	ll.InfoCtx(ctx, "test request_id", String("message", "test"))
+	ll.WarnCtx(ctx, "test request_id", String("message", "test"))
+	ll.ErrorCtx(ctx, "test request_id", String("message", "test"))
 }
