@@ -58,8 +58,12 @@ func ErrorHandler(env string, httpStatusMappingFunc func(code errors.Code) int) 
 		if env != "D" {
 			devMsg = nil
 		}
-		code = mappingFunc(clientError.Code)
-		resStatus := clientError.Code.String()
+		xcode := clientError.Code
+		if clientError.XCode != errors.OK {
+			xcode = clientError.XCode
+		}
+		code = mappingFunc(xcode)
+		resStatus := xcode.String()
 		resCode := uint32(clientError.Code)
 		if clientError.XCode != errors.OK {
 			resStatus = clientError.XCode.String()
