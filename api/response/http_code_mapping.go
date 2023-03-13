@@ -7,25 +7,7 @@ import (
 	"github.com/thnthien/great-deku/errors"
 )
 
-var HttpStatusMap = map[errors.Code]int{
-	errors.OK:                 http.StatusOK,
-	errors.Canceled:           http.StatusRequestTimeout,
-	errors.Unknown:            http.StatusInternalServerError,
-	errors.Internal:           http.StatusInternalServerError,
-	errors.DataLoss:           http.StatusInternalServerError,
-	errors.InvalidArgument:    http.StatusBadRequest,
-	errors.OutOfRange:         http.StatusBadRequest,
-	errors.DeadlineExceeded:   http.StatusGatewayTimeout,
-	errors.NotFound:           http.StatusNotFound,
-	errors.AlreadyExists:      http.StatusConflict,
-	errors.Aborted:            http.StatusConflict,
-	errors.PermissionDenied:   http.StatusForbidden,
-	errors.Unauthenticated:    http.StatusUnauthorized,
-	errors.ResourceExhausted:  http.StatusTooManyRequests,
-	errors.FailedPrecondition: http.StatusPreconditionFailed,
-	errors.Unimplemented:      http.StatusNotImplemented,
-	errors.Unavailable:        http.StatusServiceUnavailable,
-}
+var HttpStatusMap = map[errors.Code]int{}
 
 func DefaultStatusMapping(code errors.Code) int {
 	status, ok := HttpStatusMap[code]

@@ -14,7 +14,6 @@ import (
 // APIError defines struct of error for API
 type APIError struct {
 	Code     Code
-	XCode    Code
 	Err      error
 	Message  string
 	Original string
@@ -109,12 +108,6 @@ func (e *APIError) MarshalJSON() ([]byte, error) {
 	b = append(b, '{')
 	b = append(b, `"code":`...)
 	b = append(b, marshal(e.Code.String())...)
-
-	if e.XCode != 0 {
-		b = append(b, ',')
-		b = append(b, `"xcode":`...)
-		b = append(b, marshal(e.XCode.String())...)
-	}
 
 	if e.Err != nil {
 		b = append(b, ',')

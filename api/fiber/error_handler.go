@@ -1,12 +1,12 @@
 package fiberapi
 
 import (
-	"github.com/thnthien/great-deku/api/response"
 	"unsafe"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/thnthien/great-deku/api"
+	"github.com/thnthien/great-deku/api/response"
 	"github.com/thnthien/great-deku/errors"
 )
 
@@ -33,9 +33,9 @@ func ErrorHandler(env string, httpStatusMappingFunc func(code errors.Code) int) 
 		if e, ok := err.(*fiber.Error); ok {
 			code = e.Code
 			return ctx.Status(code).JSON(api.HTTPErrorResponse{
-				Status:     errors.Internal.String(),
-				Code:       uint32(errors.Internal),
-				Message:    errors.Internal.String(),
+				Status:     "Internal Server Error",
+				Code:       500,
+				Message:    "Internal Server Error",
 				DevMessage: devMsg,
 				Errors:     nil,
 				RID:        rid,
@@ -45,9 +45,9 @@ func ErrorHandler(env string, httpStatusMappingFunc func(code errors.Code) int) 
 		clientError, ok := err.(*errors.APIError)
 		if !ok {
 			return ctx.Status(code).JSON(api.HTTPErrorResponse{
-				Status:     errors.Internal.String(),
-				Code:       uint32(errors.Internal),
-				Message:    err.Error(),
+				Status:     "Internal Server Error",
+				Code:       500,
+				Message:    "Internal Server Error",
 				DevMessage: devMsg,
 				Errors:     nil,
 				RID:        rid,
@@ -59,16 +59,9 @@ func ErrorHandler(env string, httpStatusMappingFunc func(code errors.Code) int) 
 			devMsg = nil
 		}
 		xcode := clientError.Code
-		if clientError.XCode != errors.OK {
-			xcode = clientError.XCode
-		}
 		code = mappingFunc(xcode)
 		resStatus := xcode.String()
 		resCode := uint32(clientError.Code)
-		if clientError.XCode != errors.OK {
-			resStatus = clientError.XCode.String()
-			resCode = uint32(clientError.XCode)
-		}
 
 		return ctx.Status(code).JSON(api.HTTPErrorResponse{
 			Status:     resStatus,
