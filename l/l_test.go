@@ -16,6 +16,7 @@ func TestNew(t *testing.T) {
 	a := map[string]interface{}{
 		"testdebug": 1,
 	}
+	ll.Trace("test trace", Any("test trace", a))
 	ll.Debug("test debug", Any("test debug", a))
 	ll.Info("test info", Any("test debug", a))
 	ll.Warn("test warn")

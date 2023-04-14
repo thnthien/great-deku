@@ -1,6 +1,7 @@
 package l
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,21 +14,39 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thnthien/great-deku/l/config"
-	"github.com/thnthien/great-deku/l/sentry"
-
 	"github.com/k0kubun/pp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/thnthien/great-deku/l/colors"
+	"github.com/thnthien/great-deku/l/config"
+	"github.com/thnthien/great-deku/l/sentry"
 )
 
-const ConsoleEncoderName = "custom_console"
+const (
+	ConsoleEncoderName = "custom_console"
+
+	TraceLevel zapcore.Level = -2
+)
 
 var (
 	ll          Logger
 	xl          Logger
 	colorEnable = false
 )
+
+type Level struct {
+	zapcore.Level
+}
+
+func (l *Level) UnmarshalText(text []byte) error {
+	s := string(bytes.ToLower(text))
+	if s == "trace" {
+		l.Level = TraceLevel
+		return nil
+	}
+	return l.Level.UnmarshalText(text)
+}
 
 // Logger wraps zap.Logger
 type Logger struct {
@@ -55,6 +74,14 @@ var (
 	Error      = zap.Error
 )
 
+func CapitalColorLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	if level == TraceLevel {
+		enc.AppendString(colors.Cyan("TRACE"))
+		return
+	}
+	zapcore.CapitalColorLevelEncoder(level, enc)
+}
+
 // DefaultConsoleEncoderConfig ...
 var DefaultConsoleEncoderConfig = zapcore.EncoderConfig{
 	TimeKey:        "time",
@@ -64,7 +91,7 @@ var DefaultConsoleEncoderConfig = zapcore.EncoderConfig{
 	MessageKey:     "msg",
 	StacktraceKey:  "stacktrace",
 	LineEnding:     zapcore.DefaultLineEnding,
-	EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+	EncodeLevel:    CapitalColorLevelEncoder,
 	EncodeTime:     zapcore.ISO8601TimeEncoder,
 	EncodeDuration: zapcore.StringDurationEncoder,
 	EncodeCaller:   ShortColorCallerEncoder,
@@ -221,14 +248,14 @@ func init() {
 		colorEnable = true
 	}
 
-	var lv zapcore.Level
+	var lv Level
 	err = lv.UnmarshalText([]byte(logLevel))
 	if err != nil {
 		panic(err)
 	}
 
 	for _, enabler := range enablers {
-		enabler.SetLevel(lv)
+		enabler.SetLevel(lv.Level)
 	}
 
 	var errPattern string

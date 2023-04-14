@@ -16,6 +16,14 @@ func getRequestID(ctx context.Context) string {
 	return rid
 }
 
+func (l *Logger) Trace(msg string, fields ...zap.Field) {
+	l.Log(TraceLevel, msg, fields...)
+}
+
+func (l *Logger) TraceCtx(ctx context.Context, msg string, fields ...zap.Field) {
+	l.LogCtx(ctx, TraceLevel, msg, fields...)
+}
+
 func (l *Logger) DebugCtx(ctx context.Context, msg string, fields ...zap.Field) {
 	l.LogCtx(ctx, zapcore.DebugLevel, msg, fields...)
 }
@@ -41,6 +49,8 @@ func (l *Logger) LogCtx(ctx context.Context, level zapcore.Level, msg string, fi
 	var log func(string, ...zap.Field)
 
 	switch level {
+	case TraceLevel:
+		log = l.Trace
 	case zapcore.DebugLevel:
 		log = l.Debug
 	case zapcore.InfoLevel:
