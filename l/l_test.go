@@ -3,11 +3,20 @@ package l
 import (
 	"context"
 	"testing"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func TestNew(t *testing.T) {
 
-	ll = New()
+	ll = Builder{
+		File: &lumberjack.Logger{
+			Filename:   "logs/logs.log",
+			MaxSize:    1,
+			MaxAge:     7,
+			MaxBackups: 10,
+		},
+	}.Build()
 	//ll = NewWithSentry(&sentry.Configuration{
 	//	DSN:   "https://6c823523782944c597fcc102c8b6ae4e@o390151.ingest.sentry.io/5231166",
 	//	Trace: struct{ Disabled bool }{Disabled: false},

@@ -48,22 +48,29 @@ func (c *Configuration) Configure(cfg Value) error {
 // Build constructs a *zap.Logger with the configured parameters.
 func (c Configuration) Build(opts ...zap.Option) (*zap.Logger, error) {
 	logger, err := c.Config.Build(opts...)
-	if err != nil || c.Sentry == nil {
+	if err != nil {
 		// If there's an error or there's no Sentry config, we don't need to do
 		// anything but delegate.
 		return logger, err
 	}
-	sentryObj, err := c.Sentry.Build()
-	if err != nil {
+	var cores []zapcore.Core
+	if c.Sentry != nil {
+		sentryObj, err := c.Sentry.Build()
+		if err != nil {
+			return logger, err
+		}
+		cores = append(cores, sentryObj)
+	}
+	if c.File != nil {
+		w := zapcore.AddSync(c.File)
+		fcore := zapcore.NewCore(zapcore.NewConsoleEncoder(c.EncoderConfig), w, c.Config.Level)
+		cores = append(cores, fcore)
+	}
+	if len(cores) == 0 {
 		return logger, err
 	}
 	return logger.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-		cores := []zapcore.Core{core, sentryObj}
-		if c.File != nil {
-			w := zapcore.AddSync(c.File)
-			fcore := zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), w, c.Config.Level)
-			cores = append(cores, fcore)
-		}
+		cores = append([]zapcore.Core{core}, cores...)
 		return zapcore.NewTee(cores...)
 	})), nil
 }
