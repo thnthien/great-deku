@@ -5,6 +5,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/thnthien/great-deku/l/sentry"
 )
@@ -14,6 +15,7 @@ type Configuration struct {
 	zap.Config
 
 	Sentry *sentry.Configuration `yaml:"sentry"`
+	File   *lumberjack.Logger    `yaml:"file"`
 }
 
 // Configure initializes logging configuration struct from config provider
@@ -46,17 +48,30 @@ func (c *Configuration) Configure(cfg Value) error {
 // Build constructs a *zap.Logger with the configured parameters.
 func (c Configuration) Build(opts ...zap.Option) (*zap.Logger, error) {
 	logger, err := c.Config.Build(opts...)
-	if err != nil || c.Sentry == nil {
+	if err != nil {
 		// If there's an error or there's no Sentry config, we don't need to do
 		// anything but delegate.
 		return logger, err
 	}
-	sentryObj, err := c.Sentry.Build()
-	if err != nil {
+	var cores []zapcore.Core
+	if c.Sentry != nil {
+		sentryObj, err := c.Sentry.Build()
+		if err != nil {
+			return logger, err
+		}
+		cores = append(cores, sentryObj)
+	}
+	if c.File != nil {
+		w := zapcore.AddSync(c.File)
+		fcore := zapcore.NewCore(zapcore.NewConsoleEncoder(c.EncoderConfig), w, c.Config.Level)
+		cores = append(cores, fcore)
+	}
+	if len(cores) == 0 {
 		return logger, err
 	}
 	return logger.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-		return zapcore.NewTee(core, sentryObj)
+		cores = append([]zapcore.Core{core}, cores...)
+		return zapcore.NewTee(cores...)
 	})), nil
 }
 
