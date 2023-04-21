@@ -1,8 +1,7 @@
 package l
 
 import (
-	"path/filepath"
-	"runtime"
+	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -20,21 +19,17 @@ type Builder struct {
 }
 
 func (b Builder) Build(opts ...zap.Option) Logger {
-	var name string
-	if name == "" {
-		_, filename, _, _ := runtime.Caller(1)
-		name = filepath.Dir(truncFilename(filename))
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info"
+	}
+	var lv Level
+	err := lv.UnmarshalText([]byte(logLevel))
+	if err != nil {
+		lv.Level = zapcore.InfoLevel
 	}
 
-	var enabler zap.AtomicLevel
-	if e, ok := enablers[name]; ok {
-		enabler = e
-	} else {
-		enabler = zap.NewAtomicLevel()
-		enablers[name] = enabler
-	}
-
-	setLogLevelFromEnv(name, enabler)
+	enabler := zap.NewAtomicLevelAt(lv.Level)
 
 	loggerConfig := config.Configuration{
 		Config: zap.Config{
