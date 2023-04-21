@@ -2,20 +2,24 @@ package config
 
 import (
 	"errors"
+	"io"
+	"log"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/thnthien/great-deku/l/sentry"
+	"github.com/thnthien/great-deku/l/telegram"
 )
 
 // Configuration defines the desired logging options.
 type Configuration struct {
 	zap.Config
 
-	Sentry *sentry.Configuration `yaml:"sentry"`
-	File   *lumberjack.Logger    `yaml:"file"`
+	Sentry   *sentry.Configuration `yaml:"sentry"`
+	File     *lumberjack.Logger    `yaml:"file"`
+	Telegram *telegram.Config      `yaml:"telegram"`
 }
 
 // Configure initializes logging configuration struct from config provider
@@ -57,14 +61,28 @@ func (c Configuration) Build(opts ...zap.Option) (*zap.Logger, error) {
 	if c.Sentry != nil {
 		sentryObj, err := c.Sentry.Build()
 		if err != nil {
-			return logger, err
+			log.Printf("error when init sentry log: %s", err)
 		}
 		cores = append(cores, sentryObj)
 	}
 	if c.File != nil {
 		w := zapcore.AddSync(c.File)
-		fcore := zapcore.NewCore(zapcore.NewConsoleEncoder(c.EncoderConfig), w, c.Config.Level)
-		cores = append(cores, fcore)
+		core := zapcore.NewCore(zapcore.NewConsoleEncoder(c.EncoderConfig), w, c.Config.Level)
+		cores = append(cores, core)
+	}
+	if c.Telegram != nil {
+		var writer io.Writer
+		if c.Telegram.Bot != nil {
+			writer = telegram.NewWithBot(c.Telegram.Bot, c.Telegram.ChatID)
+		} else {
+			writer, err = telegram.New(c.Telegram.Token, c.Telegram.ChatID)
+			if err != nil {
+				log.Printf("error when init telegram log: %s", err)
+			}
+		}
+		w := zapcore.AddSync(writer)
+		core := zapcore.NewCore(zapcore.NewConsoleEncoder(c.EncoderConfig), w, zap.NewAtomicLevelAt(zapcore.ErrorLevel))
+		cores = append(cores, core)
 	}
 	if len(cores) == 0 {
 		return logger, err
