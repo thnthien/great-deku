@@ -10,11 +10,13 @@ import (
 
 	"github.com/thnthien/great-deku/l/config"
 	"github.com/thnthien/great-deku/l/sentry"
+	"github.com/thnthien/great-deku/l/telegram"
 )
 
 type Builder struct {
-	Sentry *sentry.Configuration `yaml:"sentry"`
-	File   *lumberjack.Logger    `yaml:"file"`
+	Sentry   *sentry.Configuration `yaml:"sentry"`
+	File     *lumberjack.Logger    `yaml:"file"`
+	Telegram *telegram.Config      `yaml:"telegram"`
 }
 
 func (b Builder) Build(opts ...zap.Option) Logger {
@@ -43,8 +45,9 @@ func (b Builder) Build(opts ...zap.Option) Logger {
 			OutputPaths:      []string{"stderr"},
 			ErrorOutputPaths: []string{"stderr"},
 		},
-		Sentry: b.Sentry,
-		File:   b.File,
+		Sentry:   b.Sentry,
+		File:     b.File,
+		Telegram: b.Telegram,
 	}
 
 	stacktraceLevel := zap.NewAtomicLevelAt(zapcore.PanicLevel)

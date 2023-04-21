@@ -2,9 +2,12 @@ package l
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/thnthien/great-deku/l/telegram"
 )
 
 func TestNew(t *testing.T) {
@@ -37,4 +40,13 @@ func TestNew(t *testing.T) {
 	ll.InfoCtx(ctx, "test request_id", String("message", "test"))
 	ll.WarnCtx(ctx, "test request_id", String("message", "test"))
 	ll.ErrorCtx(ctx, "test request_id", String("message", "test"))
+}
+
+func Test_TelegramLog(t *testing.T) {
+	ll = Builder{Telegram: &telegram.Config{
+		Token:  "",
+		ChatID: 0,
+	}}.Build()
+	ll.Info("test info")
+	ll.Error("test error", Error(errors.New("this error is for testing")))
 }
