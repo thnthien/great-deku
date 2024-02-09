@@ -36,6 +36,12 @@ func WithZapOptions(opts []zap.Option) LoggerOption {
 	}
 }
 
+func NewWithSentry(sentryCfg *sentry.Configuration) LoggerOption {
+	return func(logger *Logger) {
+		logger.sentryCfg = sentryCfg
+	}
+}
+
 // Logger wraps zap.Logger
 type Logger struct {
 	*zap.Logger
